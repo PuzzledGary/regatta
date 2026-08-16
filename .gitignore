@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Session logs / data
+sessions/
+*.jsonl
+!docs/**
+
+# PDF Docs
+water-rower-s4-usb-protocol.pdf
+
