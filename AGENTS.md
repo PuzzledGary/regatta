@@ -19,10 +19,32 @@
   at target) all verified live. Device currently DETACHED (unplugged).
 - Key protocol findings: read commands must be NO-SPACE (`IRD057` works,
   `IRD 057` → `ERROR`); unit firmware is 2.10 (`IV?` → `IV40210`).
-- NEXT ACTION: build the capture core (F1–F12): serial adapter, protocol
-  parser, session state machine — feeding `LiveReadingService` (live API) and
-  `SessionLogger` (JSONL), replacing `DemoLivePublisher`. See
-  `docs/requirements.md` for the spec and open points.
+- CAPTURE CORE PLAN (F1–F12) — small steps, marked as done:
+  - [x] S0 store layer (O1) — LogRecords + SessionLogger, tested
+  - [x] S1 serial adapter — `dev.regatta.serial`: `SerialConnection` interface,
+        `JSerialCommConnection` (jSerialComm, 19200 8N1 via
+        `setComPortTimeouts(TIMEOUT_READ_BLOCKING, 200ms)`, blocking read →
+        0 on timeout), `CrlfFrameReader` (CRLF frames, 50-byte cap, drops
+        oversize/garbage with resync), `SerialPortProvider` (config
+        `regatta.serial.device` override, else first `/dev/ttyUSB*`|
+        `/dev/ttyACM*`|`COM\d+`). Plain classes (not wired yet). Tests:
+        `CrlfFrameReaderTest` + `SerialPortProviderTest` (8 tests) green.
+        NOTE: jSerialComm has NO `setReadTimeout` — use
+        `setComPortTimeouts(TIMEOUT_READ_BLOCKING, ms, 0)`.
+  - [ ] S2 protocol layer — S4Client (handshake `USB`→`_WR_`, `EXIT`, NO-SPACE
+        `IRS/IRD/IRT` polls, `WSI/WSU` config), PacketParser (`IDS/IDD/IDT`
+        replies, `SS`/`SE`/`P XX`, `OK`/`ERROR`/`PING`) (T2)
+  - [ ] S3 session state machine — SessionManager (F2/F3):
+        idle→connecting→active→ended; end reasons USER_STOP|TARGET_REACHED|
+        RESET|IDLE|DISCONNECT
+  - [ ] S4 wiring — SessionManager feeds LiveReadingService (SSE) +
+        SessionLogger (JSONL), 1–4 Hz poller honoring ≥25 ms spacing (T3);
+        replace DemoLivePublisher
+  - [ ] S5 lifecycle — session start/stop entry points, `EXIT` on shutdown
+        (F3), reconnect on USB drop (T5)
+  - [ ] S6 (optional) F12 workout config — RESET→PING→WSI/WSU→OK
+  NEXT ACTION: **S2 protocol layer**. Spec: `docs/requirements.md`,
+  protocol details: `docs/protocol.md`.
 - Deep docs (read only when relevant): `docs/requirements.md`,
   `docs/protocol.md`, `docs/usb-connectivity.md`. Only this file is loaded
   every session.
