@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: regatta
+
+server:
+  port: 8080
+
+regatta:
+  serial:
+    device: null            # auto-detect /dev/ttyUSB*|/dev/ttyACM*|COM*
+    baud-rate: 19200
+  session:
+    poll-interval: 1s
+    workout-distance-meters: null
+    workout-duration-seconds: null
+    flush-interval: 5s
+    metadata: false         # include firmware in JSONL header when true
+  sessions:
+    directory: sessions
+  demo:
+    enabled: true           # fake live stream until capture core lands
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
