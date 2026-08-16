@@ -13,6 +13,7 @@ regatta:
     poll-interval: 1s
     workout-distance-meters: null
     workout-duration-seconds: null
+    idle-timeout: 10s
     flush-interval: 5s
     metadata: false         # include firmware in JSONL header when true
   sessions:

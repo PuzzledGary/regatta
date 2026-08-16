@@ -42,17 +42,28 @@
         ERROR → ProtocolException), sendWorkoutDistance/Duration (WSI/WSU→OK),
         exit(), close(). Plain classes (not wired). Tests: PacketParserTest +
         S4ClientTest (fake connection, 17 tests) green.
-  - [ ] S3 session state machine — SessionManager (F2/F3):
-        idle→connecting→active→ended; end reasons USER_STOP|TARGET_REACHED|
-        RESET|IDLE|DISCONNECT
+  - [x] S3 session state machine — `dev.regatta.session`: `SessionManager`
+        (F2/F3): IDLE→CONNECTING→ACTIVE→ENDED. ACTIVE on rowing evidence
+        (register increase vs previous poll, or SS/SE packet — stale idle
+        data stays static, so no false start; attach mid-workout starts on
+        the 2nd rising poll). ENDED with reason: USER_STOP (stop()) |
+        TARGET_REACHED (distance/elapsed ≥ configured target, checked
+        before idle) | RESET (values drop vs previous) | IDLE (no evidence
+        for `regatta.session.idle-timeout`, default 10s) | DISCONNECT.
+        stop()/disconnect() while CONNECTING → back to IDLE, no session.
+        Emits `onTransition(status, reason)` for S4; timing driven by
+        Reading.timestamp. `SessionEndReason` enum (matches JSONL reasons).
+        New config: `regatta.session.idle-timeout`. Plain class, not wired.
+        Tests: SessionManagerTest (17 tests) green.
   - [ ] S4 wiring — SessionManager feeds LiveReadingService (SSE) +
         SessionLogger (JSONL), 1–4 Hz poller honoring ≥25 ms spacing (T3);
         replace DemoLivePublisher
   - [ ] S5 lifecycle — session start/stop entry points, `EXIT` on shutdown
         (F3), reconnect on USB drop (T5)
   - [ ] S6 (optional) F12 workout config — RESET→PING→WSI/WSU→OK
-  NEXT ACTION: **S3 session state machine**. Spec: `docs/requirements.md`,
-  protocol details: `docs/protocol.md`.
+  NEXT ACTION: **S4 wiring**. SessionManager feeds LiveReadingService (SSE) +
+  SessionLogger (JSONL), 1–4 Hz poller honoring ≥25 ms spacing (T3);
+  replace DemoLivePublisher.
 - Deep docs (read only when relevant): `docs/requirements.md`,
   `docs/protocol.md`, `docs/usb-connectivity.md`. Only this file is loaded
   every session.

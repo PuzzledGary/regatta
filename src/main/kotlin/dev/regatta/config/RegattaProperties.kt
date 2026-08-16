@@ -23,6 +23,7 @@ data class RegattaProperties(
         val pollInterval: Duration = Duration.ofSeconds(1),
         val workoutDistanceMeters: Int? = null,
         val workoutDurationSeconds: Long? = null,
+        val idleTimeout: Duration = Duration.ofSeconds(10),
         val flushInterval: Duration = Duration.ofSeconds(5),
         val metadata: Boolean = false,
     )
