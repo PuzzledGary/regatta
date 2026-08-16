@@ -4,10 +4,35 @@ Track WaterRower S4 sessions over USB serial, log them, and analyze them after
 the session. See `docs/requirements.md` for the full requirement list (v0.2)
 and `AGENTS.md` for orientation.
 
-> Status: technical-solutions phase. Architecture is log-based: a capture
-> process writes an append-only raw log (the source of truth); parsing,
-> summaries, and CSV export are derived from it. The WSL2 USB spike is DONE
-> (verified working); core language decision (Kotlin/JVM vs Python) pending.
+> Status (2026-08-16): Kotlin + Spring Boot scaffold is in place — REST
+> snapshot + SSE live API verified, JSONL session logger implemented and
+> tested. The capture core (serial + S4 protocol + session state machine) is
+> the next step; a demo publisher feeds fake live data until then.
+
+## Stack
+
+Spring Boot 4.1 · Kotlin 2.3.21 · Gradle 9.7 (wrapper) · jSerialComm 2.11.4 ·
+Java 25. Raw JSONL logs are the primary store (database import is a later
+nice-to-have, A4).
+
+## Running
+
+```sh
+./gradlew bootRun      # start the app (HTTP API on :8080)
+./gradlew build        # compile + run tests
+```
+
+The system `gradle` is ancient (2012) — always use `./gradlew`. Configuration
+lives in `src/main/resources/application.yml` (serial device, poll interval,
+JSONL flush interval, demo publisher on/off).
+
+## API
+
+- `GET /api/session` — current session status + latest reading (REST snapshot)
+- `GET /api/live` — SSE stream, one `reading` event per update
+
+While `regatta.demo.enabled` is true, a demo publisher emits fake readings so
+the live API is exercisable without the rower.
 
 ## Prerequisites
 
@@ -40,4 +65,5 @@ A ready-to-run script is provided: `scripts/wsl2-usb-setup.ps1`.
 
 ## Usage
 
-TBD — capture tool not implemented yet.
+TBD — capture tool not implemented yet (next step is the serial + protocol
+core; the JSONL logger it feeds is already in place).
