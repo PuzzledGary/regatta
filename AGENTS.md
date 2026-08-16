@@ -31,9 +31,17 @@
         `CrlfFrameReaderTest` + `SerialPortProviderTest` (8 tests) green.
         NOTE: jSerialComm has NO `setReadTimeout` — use
         `setComPortTimeouts(TIMEOUT_READ_BLOCKING, ms, 0)`.
-  - [ ] S2 protocol layer — S4Client (handshake `USB`→`_WR_`, `EXIT`, NO-SPACE
-        `IRS/IRD/IRT` polls, `WSI/WSU` config), PacketParser (`IDS/IDD/IDT`
-        replies, `SS`/`SE`/`P XX`, `OK`/`ERROR`/`PING`) (T2)
+  - [x] S2 protocol layer — `dev.regatta.protocol`: `Packet` sealed interface
+        (StrokeStart/StrokeEnd/Pulse, Ok/Error/Ping, Handshake, Firmware,
+        RegisterRead[kind,address,bytes,value], Unknown), `PacketParser`
+        (strict uppercase hex; PULSE accepts both `P XX` and `PXX` — spike saw
+        `P03`; firmware version bytes are BCD: `IV40210` → 2.10),
+        `S4Client(connection, onAutoPacket, replyTimeout)` — connect
+        (USB→_WR_ + IV?→Firmware), readByte/Word/Triple (NO-SPACE IRS/IRD/IRT,
+        loops frames till matching reply, interleaved auto packets → callback,
+        ERROR → ProtocolException), sendWorkoutDistance/Duration (WSI/WSU→OK),
+        exit(), close(). Plain classes (not wired). Tests: PacketParserTest +
+        S4ClientTest (fake connection, 17 tests) green.
   - [ ] S3 session state machine — SessionManager (F2/F3):
         idle→connecting→active→ended; end reasons USER_STOP|TARGET_REACHED|
         RESET|IDLE|DISCONNECT
@@ -43,7 +51,7 @@
   - [ ] S5 lifecycle — session start/stop entry points, `EXIT` on shutdown
         (F3), reconnect on USB drop (T5)
   - [ ] S6 (optional) F12 workout config — RESET→PING→WSI/WSU→OK
-  NEXT ACTION: **S2 protocol layer**. Spec: `docs/requirements.md`,
+  NEXT ACTION: **S3 session state machine**. Spec: `docs/requirements.md`,
   protocol details: `docs/protocol.md`.
 - Deep docs (read only when relevant): `docs/requirements.md`,
   `docs/protocol.md`, `docs/usb-connectivity.md`. Only this file is loaded
