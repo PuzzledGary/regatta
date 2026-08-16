@@ -4,10 +4,12 @@ Track WaterRower S4 sessions over USB serial, log them, and analyze them after
 the session. See `docs/requirements.md` for the full requirement list (v0.2)
 and `AGENTS.md` for orientation.
 
-> Status (2026-08-16): Kotlin + Spring Boot scaffold is in place — REST
-> snapshot + SSE live API verified, JSONL session logger implemented and
-> tested. The capture core (serial + S4 protocol + session state machine) is
-> the next step; a demo publisher feeds fake live data until then.
+> Status (2026-08-16): Kotlin + Spring Boot scaffold in place — REST snapshot +
+> SSE live API verified, JSONL session logger implemented and tested, and the
+> capture core (serial + S4 protocol + session state machine + device poller)
+> built with 59 unit tests green. A live-test driver prints real S4 status and
+> values to stdout; the demo publisher feeds fake data until the driver is wired
+> into the JSONL logger and SSE stream.
 
 ## Stack
 
@@ -18,8 +20,9 @@ nice-to-have, A4).
 ## Running
 
 ```sh
-./gradlew bootRun      # start the app (HTTP API on :8080)
-./gradlew build        # compile + run tests
+./do start          # real S4 live test: connect, poll, print status + values
+./gradlew bootRun   # start the app in demo mode (HTTP API on :8080, fake data)
+./gradlew build     # compile + run tests
 ```
 
 The system `gradle` is ancient (2012) — always use `./gradlew`. Configuration
@@ -65,5 +68,8 @@ A ready-to-run script is provided: `scripts/wsl2-usb-setup.ps1`.
 
 ## Usage
 
-TBD — capture tool not implemented yet (next step is the serial + protocol
-core; the JSONL logger it feeds is already in place).
+Live test against the rower: plug in the S4, then `./do start`. The app
+connects, polls every `regatta.session.poll-interval` (1s), and prints status
+transitions plus one line per reading (distance, elapsed, strokes, spm, pace,
+watts, kcal) to stdout. JSONL session logging, SSE, and the TUI are still to be
+wired (see `AGENTS.md` for the plan).

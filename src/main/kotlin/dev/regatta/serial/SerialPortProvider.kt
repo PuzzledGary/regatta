@@ -8,7 +8,7 @@ class SerialPortProvider(
 ) {
 
     fun detect(): SerialPort? {
-        properties.serial.device?.let { device ->
+        properties.serial.device?.takeIf { it.isNotBlank() }?.let { device ->
             return SerialPort.getCommPort(device)
         }
         return SerialPort.getCommPorts().firstOrNull { isCandidate(it.systemPortName) }

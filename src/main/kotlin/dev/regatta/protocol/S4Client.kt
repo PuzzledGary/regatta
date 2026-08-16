@@ -6,7 +6,7 @@ import java.time.Duration
 
 class S4Client(
     private val connection: SerialConnection,
-    private val onAutoPacket: (Packet) -> Unit = {},
+    private val onAutoPacket: (String) -> Unit = {},
     private val replyTimeout: Duration = Duration.ofSeconds(5),
 ) {
 
@@ -68,7 +68,7 @@ class S4Client(
             val packet = PacketParser.parse(frame)
             if (matches(packet)) return packet
             if (packet is Packet.Error) throw ProtocolException("S4 replied ERROR while awaiting $expected")
-            onAutoPacket(packet)
+            onAutoPacket(frame)
         }
         throw ProtocolException("Timed out after ${replyTimeout.toMillis()}ms waiting for $expected")
     }

@@ -55,15 +55,39 @@
         Reading.timestamp. `SessionEndReason` enum (matches JSONL reasons).
         New config: `regatta.session.idle-timeout`. Plain class, not wired.
         Tests: SessionManagerTest (17 tests) green.
-  - [ ] S4 wiring — SessionManager feeds LiveReadingService (SSE) +
-        SessionLogger (JSONL), 1–4 Hz poller honoring ≥25 ms spacing (T3);
-        replace DemoLivePublisher
+  - [x] S4a capture device layer — `dev.regatta.capture`:
+        `ReadingBuilder` (object; maps registers → `Reading`: elapsed from
+        clock 0x1e0 triple (min<<16|sec<<8|decs) + 0x1e2 word (hr<<8|min);
+        stroke rate = 6000/stroke_avg, pace = 500/speed_mps, watts =
+        2.8/speed_mps³ — guards zero/absent), `CaptureDevice` interface
+        (`var onPacket: (String) -> Unit`, `connect(): Firmware`, `poll()`,
+        `disconnect()`), `S4CaptureDevice` (connectionSupplier seam for
+        tests; poll = 8 paced reads IRD057/IRT1E0/IRD1E2/IRD140/IRD142/
+        IRD14A/IRD088/IRT08A, ≥25 ms spacing (T3, `minPacketSpacingMs`),
+        exception → null; onPacket routes raw frames), `CaptureConfig`
+        (Spring @Bean). NOTE: `S4Client.onAutoPacket` now takes the raw line
+        `(String)` for verbatim JSONL packet records (F10); `S4Client.await()`
+        forwards `frame`. Shared test helper `FakeSerialConnection`. Tests:
+        ReadingBuilderTest (4) + S4CaptureDeviceTest (6) green (57 total).
+  - [x] LIVE-TEST (2026-08-16): `CaptureService` (minimal stdout driver,
+        `@ConditionalOnProperty regatta.demo.enabled=false`) — connects,
+        polls on `regatta.session.poll-interval` (1s), prints status
+        transitions + reading values, `@PreDestroy` disconnect. Run:
+        `./gradlew bootRun --args='--regatta.demo.enabled=false'`.
+        FIX found during smoke test: Boot 4.1 binds YAML `device: null` as
+        empty string → `getCommPort("")` yields a phantom port; now treated
+        as unset in `SerialPortProvider.detect()` (blank device → autodetect).
+  - [ ] S4b wiring — poller (1–4 Hz, honors ≥25 ms),
+        SessionManager feeding LiveReadingService (SSE) + SessionLogger
+        (JSONL) via onTransition, replace DemoLivePublisher
   - [ ] S5 lifecycle — session start/stop entry points, `EXIT` on shutdown
         (F3), reconnect on USB drop (T5)
   - [ ] S6 (optional) F12 workout config — RESET→PING→WSI/WSU→OK
-  NEXT ACTION: **S4 wiring**. SessionManager feeds LiveReadingService (SSE) +
-  SessionLogger (JSONL), 1–4 Hz poller honoring ≥25 ms spacing (T3);
-  replace DemoLivePublisher.
+  NEXT ACTION: **S4b wiring** — `CaptureService` driver: connect on
+  `regatta.demo.enabled=false`, `@Scheduled` poll → SessionManager.observeReading
+  + live.publish + SessionLogger reading/packet records; onTransition opens
+  logger (header + session_start) and closes (session_end + flush); update
+  SessionController to report real status.
 - Deep docs (read only when relevant): `docs/requirements.md`,
   `docs/protocol.md`, `docs/usb-connectivity.md`. Only this file is loaded
   every session.
